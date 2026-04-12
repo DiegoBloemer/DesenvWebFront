@@ -10,17 +10,23 @@ import { useToast } from '../../hooks/useToast';
 import ProdutoTable from './ProdutoTable';
 import ProdutoFormModal from './ProdutoFormModal';
 import ProdutoDeleteDialog from './ProdutoDeleteDialog';
+import { getCategorias } from '../../services/categoriaService';
+import DetalheModal from './DetalheModal';
+
 
 function ProdutosPage() {
   const [produtos, setProdutos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [categorias, setCategorias] = useState([]);
 
   // Controle dos modais
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState(null);
   const [produtoDeletando, setProdutoDeletando] = useState(null);
+  const [isDetalheModalOpen, setIsDetalheModalOpen] = useState(false);
+  const [produtoDetalhes, setProdutoDetalhes] = useState(null);
 
   const toast = useToast();
 
@@ -31,16 +37,22 @@ function ProdutosPage() {
 
   const carregarProdutos = async () => {
     try {
-      setLoading(true);
-      const data = await getProdutos();
-      setProdutos(data);
-    } catch (error) {
-      toast.error('Não foi possível carregar os produtos. Verifique se a API está rodando.');
-      console.error('Erro ao carregar produtos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setLoading(true);
+    const [dadosProdutos, dadosCategorias] = await Promise.all([
+      getProdutos(),
+      // .catch(() => []) evita que a página quebre se o endpoint de categorias falhar.
+      // Simplesmente trata como "sem categorias" — o seletor não aparece.
+      getCategorias().catch(() => []),
+    ]);
+    setProdutos(dadosProdutos);
+    setCategorias(dadosCategorias);
+  } catch (error) {
+    toast.error('Não foi possível carregar os dados.');
+    console.error('Erro:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Abre o modal para criar novo produto
   const handleNovo = () => {
@@ -72,6 +84,11 @@ function ProdutosPage() {
       console.error('Erro ao salvar:', error);
     }
   };
+
+  const handleVerDetalhes = (produto) => {
+  setProdutoDetalhes(produto);  // Define qual produto terá detalhes visualizados
+  setIsDetalheModalOpen(true);  // Abre o modal
+};
 
   // Abre o diálogo de confirmação para deletar
   const handleConfirmarDelete = (produto) => {
@@ -141,6 +158,7 @@ function ProdutosPage() {
           onSearchChange={setSearchTerm}
           onEditar={handleEditar}
           onDeletar={handleConfirmarDelete}
+          onVerDetalhes={handleVerDetalhes}  // ← NOVA PROP
         />
       )}
 
@@ -153,6 +171,16 @@ function ProdutosPage() {
         }}
         produtoEditando={produtoEditando}
         onSalvar={handleSalvar}
+        categorias={categorias}  // ← NOVA PROP
+      />
+      
+      <DetalheModal
+        isOpen={isDetalheModalOpen}
+        onClose={() => {
+          setIsDetalheModalOpen(false);
+          setProdutoDetalhes(null);
+        }}
+        produto={produtoDetalhes}
       />
 
       {/* Diálogo de confirmação de exclusão */}

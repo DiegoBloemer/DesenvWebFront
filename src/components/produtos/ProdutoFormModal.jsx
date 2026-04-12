@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 
-function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
+// NOVO: recebe também "categorias" — a lista de categorias da API
+function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar, categorias }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [preco, setPreco] = useState('');
   const [quantidade, setQuantidade] = useState('');
+  // NOVO: estado para o ID da categoria selecionada
+  // Começa com string vazia (nada selecionado)
+  const [categoriaId, setCategoriaId] = useState('');
 
-  // Preenche ou limpa o formulário quando o modal abre
   useEffect(() => {
     if (isOpen) {
       if (produtoEditando) {
@@ -15,11 +18,15 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
         setDescricao(produtoEditando.descricao || '');
         setPreco(produtoEditando.preco?.toString() || '');
         setQuantidade(produtoEditando.quantidade?.toString() || '');
+        // NOVO: pré-seleciona a categoria do produto sendo editado
+        // .toString() porque o value do <select> é sempre string
+        setCategoriaId(produtoEditando.categoriaId?.toString() || '');
       } else {
         setNome('');
         setDescricao('');
         setPreco('');
         setQuantidade('');
+        setCategoriaId('');
       }
     }
   }, [isOpen, produtoEditando]);
@@ -34,8 +41,15 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
       quantidade: parseInt(quantidade),
     };
 
+    // NOVO: inclui categoriaId se houver categorias disponíveis
+    if (categoriaId) {
+      // parseInt converte a string "3" do select para o número 3
+      produto.categoriaId = parseInt(categoriaId);
+    }
+
     if (produtoEditando) {
       produto.id = produtoEditando.id;
+      produto.dataCriacao = produtoEditando.dataCriacao;
     }
 
     onSalvar(produto);
@@ -48,6 +62,7 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
       title={produtoEditando ? 'Editar Produto' : 'Novo Produto'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Campo Nome */}
         <div>
           <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
             Nome do Produto
@@ -63,6 +78,7 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
           />
         </div>
 
+        {/* Campo Descrição */}
         <div>
           <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-1">
             Descrição <span className="text-gray-400 font-normal">(opcional)</span>
@@ -77,6 +93,49 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
           />
         </div>
 
+        {/* ============================================================= */}
+        {/* NOVO: SELETOR DE CATEGORIA                                     */}
+        {/*                                                                */}
+        {/* O <select> é renderizado apenas se houver categorias.          */}
+        {/* Isso permite que o frontend funcione mesmo se o backend de     */}
+        {/* categorias não estiver pronto (degrada graciosamente).         */}
+        {/*                                                                */}
+        {/* "required" garante que o usuário deve selecionar uma categoria */}
+        {/* antes de enviar o formulário.                                  */}
+        {/*                                                                */}
+        {/* Cada <option> tem:                                             */}
+        {/*   - value={cat.id}: o que é enviado (número do ID)            */}
+        {/*   - texto: cat.nome (o que o usuário vê)                      */}
+        {/* ============================================================= */}
+        {categorias && categorias.length > 0 && (
+          <div>
+            <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 mb-1">
+              Categoria
+            </label>
+            <select
+              id="categoria"
+              value={categoriaId}
+              onChange={(e) => setCategoriaId(e.target.value)}
+              required
+              className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-white"
+            >
+              {/* Opção padrão — não é selecionável como valor final por causa do required */}
+              <option value="">-- Selecione uma categoria --</option>
+
+              {/* Renderiza uma <option> para cada categoria.
+                  .map() itera pelo array e retorna um elemento JSX para cada item.
+                  key={cat.id} é obrigatório no React para listas — ajuda o React
+                  a identificar qual item mudou, foi adicionado ou removido. */}
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Campos Preço e Quantidade lado a lado */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="preco" className="block text-sm font-medium text-gray-700 mb-1">
@@ -89,7 +148,7 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
               min="0"
               value={preco}
               onChange={(e) => setPreco(e.target.value)}
-              placeholder="0.00"
+              placeholder="Ex: 4500.00"
               required
               className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
             />
@@ -104,14 +163,14 @@ function ProdutoFormModal({ isOpen, onClose, produtoEditando, onSalvar }) {
               min="0"
               value={quantidade}
               onChange={(e) => setQuantidade(e.target.value)}
-              placeholder="0"
+              placeholder="Ex: 10"
               required
               className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
             />
           </div>
         </div>
 
-        {/* Botões do formulário */}
+        {/* Botões de ação */}
         <div className="flex gap-3 pt-4 border-t border-gray-200">
           <button
             type="button"
