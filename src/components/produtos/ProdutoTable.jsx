@@ -1,12 +1,14 @@
-import { Search, Pencil, Trash2, PackageOpen } from 'lucide-react';
+import { Search, Pencil, Trash2, PackageOpen, FileText } from 'lucide-react';
 
-function ProdutoTable({ produtos, searchTerm, onSearchChange, onEditar, onDeletar }) {
+
+function ProdutoTable({ produtos, searchTerm, onSearchChange, onEditar, onDeletar, onVerDetalhes }) {
   // Filtra os produtos pelo termo de busca (nome ou descrição)
   const produtosFiltrados = produtos.filter((p) => {
     const termo = searchTerm.toLowerCase();
     return (
       p.nome.toLowerCase().includes(termo) ||
-      (p.descricao && p.descricao.toLowerCase().includes(termo))
+      (p.descricao && p.descricao.toLowerCase().includes(termo)) ||
+      (p.categoria && p.categoria.nome.toLowerCase().includes(termo))
     );
   });
 
@@ -46,6 +48,9 @@ function ProdutoTable({ produtos, searchTerm, onSearchChange, onEditar, onDeleta
               <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
                 Descrição
               </th>
+              <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
+                Categoria
+              </th>
               <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
                 Preço
               </th>
@@ -70,6 +75,15 @@ function ProdutoTable({ produtos, searchTerm, onSearchChange, onEditar, onDeleta
                     {produto.descricao || '—'}
                   </span>
                 </td>
+                <td className="px-6 py-4">
+                  {produto.categoria ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                      {produto.categoria.nome}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">Sem categoria</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 text-right">
                   <span className="text-sm font-medium text-gray-900">
                     R$ {produto.preco.toFixed(2)}
@@ -90,6 +104,13 @@ function ProdutoTable({ produtos, searchTerm, onSearchChange, onEditar, onDeleta
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => onVerDetalhes(produto)}
+                      title="Ver detalhes técnicos"
+                      className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => onEditar(produto)}
                       title="Editar produto"

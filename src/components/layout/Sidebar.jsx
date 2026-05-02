@@ -3,7 +3,7 @@ import { Package, ShoppingCart, Tag, FileText } from 'lucide-react';
 
 const menuItems = [
   { to: '/produtos', label: 'Produtos', icon: ShoppingCart, enabled: true },
-  { to: '/categorias', label: 'Categorias', icon: Tag, enabled: false },
+  { to: '/categorias', label: 'Categorias', icon: Tag, enabled: true },
   { to: '/detalhes', label: 'Detalhes', icon: FileText, enabled: false },
 ];
 
