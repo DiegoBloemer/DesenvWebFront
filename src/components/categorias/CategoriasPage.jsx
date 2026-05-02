@@ -109,16 +109,21 @@ function CategoriasPage() {
       if (categoriaEditando) {
         // PUT /api/categorias/{id}
         await atualizarCategoria(categoria.id, categoria);
+        
+        setCategorias(
+          prev => prev.map(cat => cat.id === categoria.id ? categoria : cat)
+        );
         toast.success(`Categoria "${categoria.nome}" atualizada com sucesso!`);
       } else {
         // POST /api/categorias
-        await criarCategoria(categoria);
+        const novaCategoria = await criarCategoria(categoria);
+
+        setCategorias(prev => [...prev, novaCategoria]);
         toast.success(`Categoria "${categoria.nome}" cadastrada com sucesso!`);
       }
       // Fecha o modal e recarrega os dados
       setIsFormModalOpen(false);
       setCategoriaEditando(null);
-      await carregarDados();
     } catch (error) {
       toast.error('Erro ao salvar a categoria.');
       console.error('Erro ao salvar:', error);
@@ -136,10 +141,13 @@ function CategoriasPage() {
     try {
       // DELETE /api/categorias/{id}
       await deletarCategoria(categoriaDeletando.id);
+
+      setCategorias(prev => 
+        prev.filter(cat => cat.id != categoriaDeletando.id)
+      );
       toast.success(`Categoria "${categoriaDeletando.nome}" removida com sucesso!`);
       setIsDeleteDialogOpen(false);
       setCategoriaDeletando(null);
-      await carregarDados();
     } catch (error) {
       // =========================================================
       // TRATAMENTO DE ERRO ESPECÍFICO DO BACKEND
